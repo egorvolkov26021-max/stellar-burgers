@@ -1,3 +1,4 @@
+import type { SerializedError } from '@reduxjs/toolkit';
 export type TIngredient = {
   _id: string;
   name: string;
@@ -50,4 +51,24 @@ export type TFeedState = {
   totalToday: number;
   isLoading: boolean;
   error: unknown;
+};
+
+export type IngredientsState = {
+  ingredients: TIngredient[];
+  isLoading: boolean;
+  error: SerializedError | null;
+};
+
+export type TOrderState = {
+  orders: TOrder[];
+  orderData: TOrder | null;
+  orderModalData: TOrder | null;
+  orderRequest: boolean;
+};
+
+export type TUserState = {
+  user: TUser | null;
+  isLoading: boolean;
+  isAuthChecked: boolean;
+  error: SerializedError | null;
 };

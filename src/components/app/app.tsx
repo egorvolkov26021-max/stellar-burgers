@@ -1,19 +1,51 @@
 import { AppHeader } from '@components';
 import { ConstructorPage } from '@pages';
+import { getUserThunk } from '@slices/userSlice';
 import { Preloader } from '@ui';
-import { Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+
+import { useDispatch, useSelector } from '@services/store';
+
+import { Feed } from '../../pages/feed';
+import { ForgotPassword } from '../../pages/forgot-password';
+import { Login } from '../../pages/login';
+import { NotFound404 } from '../../pages/not-fount-404';
+import { Profile } from '../../pages/profile';
+import { ProfileOrders } from '../../pages/profile-orders';
+import { Register } from '../../pages/register';
+import { ResetPassword } from '../../pages/reset-password';
+import { getIngredientsThunk } from '../../services/slices/ingredientsSlice';
+import { IngredientDetails } from '../ingredient-details/ingredient-details';
+import { Modal } from '../modal';
+import { OrderInfo } from '../order-info/order-info';
+import { ProtectedRoute } from '../ProtectedRoute';
 
 import type { AppContentProps } from './type';
-import type { TIngredient } from '@utils-types';
+import type { Location } from 'react-router-dom';
 
 import '../../index.css';
 
 import styles from './app.module.css';
 
+type TLocationState = {
+  background?: Location;
+};
+
 const App = (): React.JSX.Element => {
-  const ingredients: TIngredient[] = [];
-  const isIngredientsLoading = false;
-  const ingredientsError = null;
+  const ingredients = useSelector((state) => state.ingredients.ingredients);
+  const isIngredientsLoading = useSelector((state) => state.ingredients.isLoading);
+  const ingredientsError = useSelector((state) => state.ingredients.error);
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    void dispatch(getUserThunk());
+  }, [dispatch]);
+
+  useEffect(() => {
+    void dispatch(getIngredientsThunk());
+  }, [dispatch]);
 
   return (
     <div className={styles.app}>
@@ -59,11 +91,71 @@ const AppContent = ({
 };
 
 const RouteComponent = (): React.JSX.Element => {
+  const location = useLocation();
+
+  const locationState = location.state as TLocationState | null;
+  const background = locationState?.background;
+
+  const navigate = useNavigate();
+
+  const onClose = (): void => {
+    void navigate(-1);
+  };
   return (
     <>
-      <Routes>
+      <Routes location={background ?? location}>
         <Route path="/" element={<ConstructorPage />} />
+        <Route path="/feed" element={<Feed />} />
+
+        <Route path="/feed/:number" element={<OrderInfo />} />
+
+        <Route path="/ingredients/:id" element={<IngredientDetails />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/orders" element={<ProfileOrders />} />
+
+          <Route path="/profile/orders/:number" element={<OrderInfo />} />
+        </Route>
+
+        <Route path="*" element={<NotFound404 />} />
       </Routes>
+
+      {background && (
+        <Routes>
+          <Route
+            path="/feed/:number"
+            element={
+              <Modal onClose={onClose} title="1">
+                <OrderInfo />
+              </Modal>
+            }
+          />
+
+          <Route
+            path="/ingredients/:id"
+            element={
+              <Modal onClose={onClose} title="Детали ингредиента">
+                <IngredientDetails />
+              </Modal>
+            }
+          />
+
+          <Route element={<ProtectedRoute />}>
+            <Route
+              path="/profile/orders/:number"
+              element={
+                <Modal onClose={onClose} title="1">
+                  <OrderInfo />
+                </Modal>
+              }
+            />
+          </Route>
+        </Routes>
+      )}
     </>
   );
 };
