@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { clearConstructor } from '@slices/constructorSlice';
 
 import {
   orderBurgerApi,
@@ -14,8 +15,12 @@ export const getOrderThunk = createAsyncThunk('order/getOrder', async () => {
 
 export const createOrderThunk = createAsyncThunk(
   'order/createOrder',
-  async (ingredients: string[]) => {
-    return orderBurgerApi(ingredients);
+  async (ingredients: string[], { dispatch }) => {
+    const response = await orderBurgerApi(ingredients);
+
+    dispatch(clearConstructor());
+
+    return response;
   }
 );
 
