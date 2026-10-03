@@ -3,7 +3,7 @@ import { ConstructorPage } from '@pages';
 import { getUserThunk } from '@slices/userSlice';
 import { Preloader } from '@ui';
 import { useEffect } from 'react';
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { useDispatch, useSelector } from '@services/store';
 
@@ -89,6 +89,15 @@ const AppContent = ({
 
   return <RouteComponent />;
 };
+const OrderModal = ({ onClose }: { onClose: () => void }): React.JSX.Element => {
+  const { number } = useParams<{ number: string }>();
+
+  return (
+    <Modal onClose={onClose} title={number ?? ''}>
+      <OrderInfo />
+    </Modal>
+  );
+};
 
 const RouteComponent = (): React.JSX.Element => {
   const location = useLocation();
@@ -97,10 +106,10 @@ const RouteComponent = (): React.JSX.Element => {
   const background = locationState?.background;
 
   const navigate = useNavigate();
-
   const onClose = (): void => {
     void navigate(-1);
   };
+
   return (
     <>
       <Routes location={background ?? location}>
@@ -110,14 +119,15 @@ const RouteComponent = (): React.JSX.Element => {
         <Route path="/feed/:number" element={<OrderInfo />} />
 
         <Route path="/ingredients/:id" element={<IngredientDetails />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route element={<ProtectedRoute onlyUnAuth />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+        </Route>
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/orders" element={<ProfileOrders />} />
-
           <Route path="/profile/orders/:number" element={<OrderInfo />} />
         </Route>
 
@@ -126,14 +136,7 @@ const RouteComponent = (): React.JSX.Element => {
 
       {background && (
         <Routes>
-          <Route
-            path="/feed/:number"
-            element={
-              <Modal onClose={onClose} title="1">
-                <OrderInfo />
-              </Modal>
-            }
-          />
+          <Route path="/feed/:number" element={<OrderModal onClose={onClose} />} />
 
           <Route
             path="/ingredients/:id"
@@ -147,11 +150,7 @@ const RouteComponent = (): React.JSX.Element => {
           <Route element={<ProtectedRoute />}>
             <Route
               path="/profile/orders/:number"
-              element={
-                <Modal onClose={onClose} title="1">
-                  <OrderInfo />
-                </Modal>
-              }
+              element={<OrderModal onClose={onClose} />}
             />
           </Route>
         </Routes>

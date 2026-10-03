@@ -1,8 +1,7 @@
-import { clearConstructor } from '@slices/constructorSlice';
 import { clearOrderModal, createOrderThunk } from '@slices/orderSlice';
 import { BurgerConstructorUI } from '@ui';
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import { useSelector, useDispatch } from '@services/store';
 
@@ -19,11 +18,13 @@ export const BurgerConstructor = (): React.JSX.Element | null => {
   const orderModalData: TOrder | null = useSelector(
     (state) => state.order.orderModalData
   );
-
+  const location = useLocation();
   const dispatch = useDispatch();
   const onOrderClick = (): void => {
     if (!user) {
-      void navigate('/login');
+      void navigate('/login', {
+        state: { from: location },
+      });
       return;
     }
 
@@ -38,7 +39,6 @@ export const BurgerConstructor = (): React.JSX.Element | null => {
 
   const closeOrderModal = (): void => {
     void dispatch(clearOrderModal());
-    void dispatch(clearConstructor());
   };
 
   const price = useMemo(
