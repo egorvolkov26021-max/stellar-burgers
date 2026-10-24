@@ -8,13 +8,14 @@ async function addIngredient(page: Page, name: string) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.routeFromHAR('tests/hars/ingredients.har', { notFound: 'fallback' });
-  await page.route('**/api/**', async (route) => {
-    if (route.request().url().endsWith('/ingredients')) return route.fallback();
-    if (route.request().url().endsWith('/auth/user')) {
-      return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ success: false, message: 'Unauthorized' }) });
-    }
-    return route.abort();
+  await page.route('**/api/**', (route) => route.abort());
+  await page.routeFromHAR('tests/hars/ingredients.har', {
+    url: '**/api/ingredients',
+    notFound: 'abort'
+  });
+  await page.routeFromHAR('tests/hars/auth-guest.har', {
+    url: '**/api/auth/user',
+    notFound: 'abort'
   });
   await page.goto('/');
   await expect(page.getByText(bun, { exact: true })).toBeVisible();
@@ -54,7 +55,10 @@ test.describe('order creation', () => {
       localStorage.setItem('refreshToken', 'fake-refresh-token');
       document.cookie = 'accessToken=fake-access-token; path=/';
     });
-    await page.routeFromHAR('tests/hars/order.har', { notFound: 'fallback' });
+    await page.routeFromHAR('tests/hars/order.har', {
+      url: /\/api\/(auth\/user|orders)$/,
+      notFound: 'abort'
+    });
     await page.reload();
     await expect(page.getByText(bun, { exact: true })).toBeVisible();
     await addIngredient(page, bun);
