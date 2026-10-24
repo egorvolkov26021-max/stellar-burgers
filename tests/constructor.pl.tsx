@@ -7,14 +7,13 @@ async function addIngredient(page: Page, name: string) {
   await page.getByText(name, { exact: true }).first().locator('..').locator('..').getByText('Добавить').click();
 }
 
-test.beforeEach(async ({ page }) => {
-  await page.route('**/api/**', (route) => route.abort());
-  await page.routeFromHAR('tests/hars/ingredients.har', {
-    url: '**/api/ingredients',
-    notFound: 'abort'
-  });
-  await page.routeFromHAR('tests/hars/auth-guest.har', {
-    url: '**/api/auth/user',
+test.beforeEach(async ({ page }, testInfo) => {
+  const harFile = testInfo.title === 'submits burger, shows order number, clears constructor and closes modal'
+    ? 'tests/hars/order.har'
+    : 'tests/hars/auth-guest.har';
+
+  await page.routeFromHAR(harFile, {
+    url: '**/api/**',
     notFound: 'abort'
   });
   await page.goto('/');
@@ -54,10 +53,6 @@ test.describe('order creation', () => {
     await page.addInitScript(() => {
       localStorage.setItem('refreshToken', 'fake-refresh-token');
       document.cookie = 'accessToken=fake-access-token; path=/';
-    });
-    await page.routeFromHAR('tests/hars/order.har', {
-      url: /\/api\/(auth\/user|orders)$/,
-      notFound: 'abort'
     });
     await page.reload();
     await expect(page.getByText(bun, { exact: true })).toBeVisible();
